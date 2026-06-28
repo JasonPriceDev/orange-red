@@ -18,6 +18,17 @@ if [ -n "$GIT_EMAIL" ]; then
     git config --global user.email "$GIT_EMAIL"
 fi
 
+# Install GitHub CLI if not present
+if ! command -v gh >/dev/null 2>&1; then
+    if command -v apt-get >/dev/null 2>&1; then
+        if command -v sudo >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y gh
+        else
+            apt-get update && apt-get install -y gh
+        fi
+    fi
+fi
+
 pip install --upgrade pip
 
 if [ -f requirements.txt ]; then

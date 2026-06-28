@@ -8,7 +8,8 @@
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": false
-    }
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
   "customizations": {
@@ -24,7 +25,7 @@
       ],
       "settings": {
         "deepseek-copilot.baseUrl": "https://api.deepseek.com",
-        "deepseek-copilot.maxTokens": 2048,
+        "deepseek-copilot.maxTokens": 0,
         "chat.defaultModel": "DeepSeek V4 Pro (deepseek)",
         "chat.exploreAgent.defaultModel": "DeepSeek V4 Pro (deepseek)",
         "github.copilot.selectedCompletionModel": "DeepSeek V4 Pro (deepseek)",
