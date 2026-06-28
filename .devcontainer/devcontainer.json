@@ -1,0 +1,45 @@
+{
+  "name": "Python 3 & PostgreSQL",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "runArgs": ["--env-file", "${localWorkspaceFolder}/.devcontainer/.env"],
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "ms-azuretools.vscode-docker",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "Vizards.deepseek-v4-for-copilot"
+      ],
+      "settings": {
+        "deepseek-copilot.baseUrl": "https://api.deepseek.com",
+        "deepseek-copilot.maxTokens": 2048,
+        "chat.defaultModel": "DeepSeek V4 Pro (deepseek)",
+        "chat.exploreAgent.defaultModel": "DeepSeek V4 Pro (deepseek)",
+        "github.copilot.selectedCompletionModel": "DeepSeek V4 Pro (deepseek)",
+        "inlineChat.defaultModel": "DeepSeek V4 Pro (deepseek)",
+        "chat.utilitySmallModel": "deepseek/deepseek-v4-flash"
+      }
+    }
+  },
+
+  "postCreateCommand": "bash scripts/post-create.sh",
+
+  "forwardPorts": [5432],
+
+  "remoteEnv": {
+    "DATABASE_URL": "postgresql://postgres:postgres@db:5432/postgres",
+    "DEEP_SEEK_API_KEY": "${containerEnv:DEEP_SEEK_API_KEY}"
+  }
+}

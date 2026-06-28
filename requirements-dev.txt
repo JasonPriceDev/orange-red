@@ -1,0 +1,7 @@
+ipython
+pytest
+ipdb
+ruff
+black
+mypy
+httpie
