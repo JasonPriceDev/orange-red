@@ -4,6 +4,10 @@
   "service": "app",
   "workspaceFolder": "/workspace",
   "runArgs": ["--env-file", "${localWorkspaceFolder}/.devcontainer/.env"],
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
+  ],
 
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
@@ -41,6 +45,7 @@
 
   "remoteEnv": {
     "DATABASE_URL": "postgresql://postgres:postgres@db:5432/postgres",
-    "DEEP_SEEK_API_KEY": "${containerEnv:DEEP_SEEK_API_KEY}"
+    "DEEP_SEEK_API_KEY": "${containerEnv:DEEP_SEEK_API_KEY}",
+    "SSH_AUTH_SOCK": "${localEnv:SSH_AUTH_SOCK}"
   }
 }
