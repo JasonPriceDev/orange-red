@@ -38,8 +38,3 @@ fi
 if [ -f requirements-dev.txt ]; then
     pip install -r requirements-dev.txt
 fi
-
-# Install GitHub Copilot CLI
-if command -v npm &> /dev/null; then
-    npm install -g @githubcopilot/cli
-fi
