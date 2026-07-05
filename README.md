@@ -58,11 +58,46 @@ orange-red is a Python application that provides [describe your project's purpos
 Create a `.devcontainer/.env` file with the following variables (example provided):
 ```env
 DEEP_SEEK_API_KEY=your_api_key_here
+OPENROUTER_API_KEY=your_api_key_here
 GIT_USERNAME=Your Name
 GIT_EMAIL=your.email@example.com
 ```
 
 Database connection is configured via `DATABASE_URL` in the dev container and points to PostgreSQL at `postgresql://postgres:postgres@db:5432/postgres`.
+
+## Copilot CLI & BYOK Models
+
+The dev container is pre-configured to support **Bring Your Own Key (BYOK)** models in GitHub Copilot CLI. This allows you to use custom LLM providers (like OpenRouter or DeepSeek's direct API) instead of the default GitHub-hosted models.
+
+### Switcher Functions
+
+Three helper functions are added to your shell environment (`~/.bashrc`) to easily switch providers:
+
+1. **OpenRouter (Default: DeepSeek V4 Pro)**
+   ```bash
+   copilot-openrouter
+   ```
+   Sets up Copilot CLI to use OpenRouter (`https://openrouter.ai/api/v1`) with the `deepseek/deepseek-v4-pro` model.
+   - To override the model: `copilot-openrouter anthropic/claude-3.5-sonnet`
+
+2. **DeepSeek Direct (Default: DeepSeek V4 Pro)**
+   ```bash
+   copilot-deepseek
+   ```
+   Sets up Copilot CLI to use DeepSeek's direct API (`https://api.deepseek.com/v1`) with the `deepseek-v4-pro` model.
+   - To override the model: `copilot-deepseek deepseek-v4-flash`
+
+3. **Default GitHub Copilot**
+   ```bash
+   copilot-default
+   ```
+   Unsets all BYOK environment variables and restores Copilot CLI to default GitHub-hosted models.
+
+### Token Limits & Catalog Warnings
+
+Because custom models like `deepseek-v4-pro` are not in Copilot CLI's built-in model catalog, the switcher functions automatically configure explicit token limits to prevent catalog warnings and ensure optimal performance:
+- `COPILOT_PROVIDER_MAX_PROMPT_TOKENS=200000`
+- `COPILOT_PROVIDER_MAX_OUTPUT_TOKENS=65536`
 
 ## Development
 

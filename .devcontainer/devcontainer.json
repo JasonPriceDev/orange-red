@@ -1,5 +1,5 @@
 {
-  "name": "Python 3 & PostgreSQL",
+  "name": "Orion Forge",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
@@ -25,11 +25,13 @@
         "ms-azuretools.vscode-docker",
         "GitHub.copilot",
         "GitHub.copilot-chat",
-        "Vizards.deepseek-v4-for-copilot"
+        "Vizards.deepseek-v4-for-copilot",
+        "selfagency.z-models-vscode"
       ],
       "settings": {
         "deepseek-copilot.baseUrl": "https://api.deepseek.com",
         "deepseek-copilot.maxTokens": 0,
+        "z-models.openrouter.apiKey": "${env:OPENROUTER_API_KEY}",
         "chat.defaultModel": "DeepSeek V4 Pro (deepseek)",
         "chat.exploreAgent.defaultModel": "DeepSeek V4 Pro (deepseek)",
         "github.copilot.selectedCompletionModel": "DeepSeek V4 Pro (deepseek)",
@@ -46,6 +48,7 @@
   "remoteEnv": {
     "DATABASE_URL": "postgresql://postgres:postgres@db:5432/postgres",
     "DEEP_SEEK_API_KEY": "${containerEnv:DEEP_SEEK_API_KEY}",
+    "OPENROUTER_API_KEY": "${containerEnv:OPENROUTER_API_KEY}",
     "SSH_AUTH_SOCK": "${localEnv:SSH_AUTH_SOCK}"
   }
 }
