@@ -5,8 +5,8 @@
       "args": ["-y", "chrome-devtools-mcp"]
     },
     "postgres": {
-      "command": "npx",
-      "args": ["-y", "@anthropic/mcp-server-postgres", "postgresql://postgres:postgres@db:5432/postgres"]
+      "command": "bash",
+      "args": ["-c", "npx -y @anthropic/mcp-server-postgres \"$DATABASE_URL\""]
     }
   }
 }
