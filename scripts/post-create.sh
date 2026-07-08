@@ -195,5 +195,16 @@ copilot-openrouter() {
     export COPILOT_PROVIDER_MAX_OUTPUT_TOKENS=65536
     echo "Copilot CLI → OpenRouter ($COPILOT_MODEL)"
 }
+
+copilot-openai() {
+    __copilot_load_env
+    export COPILOT_PROVIDER_BASE_URL="https://api.openai.com/v1"
+    export COPILOT_PROVIDER_API_KEY="$OPENAI_API_KEY"
+    export COPILOT_PROVIDER_TYPE="openai"
+    export COPILOT_MODEL="${1:-gpt-4o}"
+    export COPILOT_PROVIDER_MAX_PROMPT_TOKENS=200000
+    export COPILOT_PROVIDER_MAX_OUTPUT_TOKENS=65536
+    echo "Copilot CLI → OpenAI ($COPILOT_MODEL)"
+}
 BASHRC_EOF
 fi
