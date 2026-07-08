@@ -3,6 +3,7 @@ set -e
 
 # Load environment variables from .devcontainer/.env
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="$SCRIPT_DIR/../.devcontainer/.env"
 if [ -f "$ENV_FILE" ]; then
     set -a
@@ -123,10 +124,10 @@ install_caveman_skills() {
     curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
     # The installer also drops a stray singular `agent/` mirror - remove it so
     # only the standard `.agents/` tree remains.
-    rm -rf /workspace/agent
+    rm -rf "$WORKSPACE_ROOT/agent"
 }
 
-CAVEMAN_STAMP="/workspace/.agents/skills/.caveman-installed-epoch"
+CAVEMAN_STAMP="$WORKSPACE_ROOT/.agents/skills/.caveman-installed-epoch"
 # Latest commit date on caveman's main branch, as an epoch (empty on any failure).
 CAVEMAN_REMOTE_ISO="$(curl -fsSL "https://api.github.com/repos/JuliusBrussee/caveman/commits/main" 2>/dev/null \
     | jq -r '.commit.committer.date // empty' 2>/dev/null)"
@@ -142,14 +143,14 @@ if [ -n "$CAVEMAN_REMOTE_EPOCH" ]; then
         install_caveman_skills
         echo "$CAVEMAN_REMOTE_EPOCH" > "$CAVEMAN_STAMP"
     fi
-elif [ ! -d "/workspace/.agents/skills/caveman" ]; then
+elif [ ! -d "$WORKSPACE_ROOT/.agents/skills/caveman" ]; then
     # Offline fallback: install only if the skills are missing entirely.
     install_caveman_skills
 fi
 
 # Install third-party agent skills. `skills add` is idempotent - it re-copies
 # into .agents/skills/ so this is safe to run on every rebuild.
-if [ ! -d "/workspace/.agents/skills/frontend-design" ]; then
+if [ ! -d "$WORKSPACE_ROOT/.agents/skills/frontend-design" ]; then
     npx --yes skills add https://github.com/anthropics/skills --skill frontend-design
 fi
 
@@ -160,7 +161,7 @@ if ! grep -q 'copilot-deepseek()' "$HOME/.bashrc" 2>/dev/null; then
 # Copilot CLI BYOK provider switchers
 # Auto-load .env keys if not already in environment
 __copilot_load_env() {
-    local env_file="/workspace/.devcontainer/.env"
+    local env_file="$WORKSPACE_ROOT/.devcontainer/.env"
     if [ -f "$env_file" ]; then
         set -a; source "$env_file"; set +a
     fi
