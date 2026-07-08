@@ -105,14 +105,27 @@ Agent skills (`SKILL.md` bundles that give Copilot/agents domain knowledge) live
 
 | Directory | Contents | How to add |
 | --- | --- | --- |
-| `.agents/skills/` | Third-party skills installed via a CLI — the `caveman*`/`cavecrew` family and `frontend-design` | See installers below |
+| `.agents/skills/` | Third-party skills installed via a CLI | See installers below |
 | `.github/skills/` | Repo-native, hand-authored skills (e.g. `gh-cli`) | Author `SKILL.md` by hand |
 
 VS Code Copilot discovers skills from **both** locations automatically. `.agents/skills/` is the standard output path for CLI installers, so it is the source of truth for everything installed that way — don't move those copies into `.github/`, a dev-container rebuild just re-creates them under `.agents/`.
 
+The development workflow is spec-driven (Cavekit). The full process, and how each skill fits, is documented in [`docs/standards-and-guides/workflow-guide.md`](docs/standards-and-guides/workflow-guide.md). Installed skills, by role:
+
+| Role | Skills |
+| --- | --- |
+| Cavekit loop | `spec`, `build`, `check` |
+| Cavekit reach-for | `grill`, `research`, `review`, `deepen`, `improve-codebase-architecture` |
+| Testing | `tdd` |
+| UI / design | `frontend-design` (direction), `web-design-guidelines` (audit) |
+| Automation / QA | `agent-browser` |
+| Cross-cutting | `find-skills`, `handoff` |
+| Utilities | `caveman`, `backprop`, `cavecrew` |
+| Repo-native | `gh-cli` |
+
 Installers run from `scripts/post-create.sh` on every container rebuild:
 
-- **caveman family** — `curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash`
+- **caveman / cavekit family** — `curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/<tag>/install.sh | bash` (pinned to a release tag)
 - **other skills** — `npx skills add <repo-url> --skill <name>`
 
 The caveman installer re-runs **only when the upstream repo has new commits**: `post-create.sh` records the repo's last-commit epoch in `.agents/skills/.caveman-installed-epoch` and compares it against the tip of `main` (via the GitHub API) on each rebuild. If the API is unreachable it falls back to a plain "install if missing" check.

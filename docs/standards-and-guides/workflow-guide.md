@@ -2,8 +2,9 @@
 
 This guide defines how AI-assisted development is conducted on **orange-red**.
 It follows the Cavekit workflow: clarify the idea, write or amend `SPEC.md`,
-review the spec when risk is high, build against the spec, check for drift, and
-backpropagate bugs into the spec so they do not recur.
+set a visual direction for any UI, review the spec when risk is high, build
+against the spec, check for drift, and backpropagate bugs into the spec so they
+do not recur.
 
 This document is intentionally written in normal English. Cavekit skills may use
 compressed output internally, but project documentation should remain clear and
@@ -29,34 +30,70 @@ These decisions are settled unless a later spec change explicitly revises them.
 ## 1. Cavekit workflow overview
 
 Cavekit is a specification-driven workflow. The central artifact is `SPEC.md` at
-the repository root. Code is planned, built, reviewed, and repaired against that
-file.
+the repository root. It is the durable memory of the project: if the context
+window is lost, reload the spec and keep going. Code is planned, built,
+reviewed, and repaired against that file. There are no sub-agents, no
+dashboards, and no orchestration — one thread, one spec, one diff.
 
-Use the Cavekit skills this way:
+**The loop — run these every time:**
 
-| Situation | Skill | Purpose |
+| Skill | Slash command | Purpose |
 |---|---|---|
-| The idea is vague or has multiple possible interpretations. | `grill` | Ask targeted questions before a spec exists. |
-| The spec depends on external library, API, or best-practice facts. | `research` | Produce sourced findings for `§R`. |
-| A new feature or contract needs to be specified. | `spec` | Create or amend `SPEC.md`. This is the only skill that should write spec content. |
-| The change has high blast radius. | `review` | Try to refute the spec before implementation starts. |
-| The spec is ready to implement. | `build` | Implement `§T` tasks, verify them, and update task status. |
-| Code may have drifted from the spec. | `check` | Read-only drift report for `§V`, `§I`, and `§T`. |
-| A bug, failed test, or incident reveals a missing rule. | `backprop` | Add a `§B` bug record and usually a new `§V` invariant. |
-| The code is green and there is time to improve design. | `deepen` | Propose interface-shrinking refactors without changing behavior. |
+| `spec` | `/ck:spec` | Create, amend, or backprop `SPEC.md`. The sole writer of spec content. |
+| `build` | `/ck:build` | Plan then execute against the spec. Names which test proves each `§V`, and auto-backprops on failure. |
+| `check` | `/ck:check` | Read-only drift report listing `§V`, `§I`, and `§T` violations. |
+
+**Reach for these — only when the change earns the ceremony:**
+
+| Skill | Slash command | Purpose |
+|---|---|---|
+| `grill` | `/ck:grill` | Interrogate a fuzzy idea into a sharp `§G`/`§C`, one question at a time, before spec. |
+| `research` | `/ck:research` | Gather external facts into `§R` so the build is grounded, not hallucinated. Every finding cites a source. |
+| `review` | `/ck:review` | Adversarial senior review of the spec before build. Refutes, hardens `§V`, ends in a go/no-go gate. |
+| `deepen` | `/ck:deepen` | Spare-budget design pass — make one shallow module deep. Behavior held, tests green before and after. |
+| `improve-codebase-architecture` | — | Scan the codebase for shallow modules and present deepening candidates as a visual report. The discovery front-end for `deepen`. |
+| `frontend-design` | — | Distinctive, intentional visual direction when building or reshaping UI. Reach for it before UI implementation. |
+| `web-design-guidelines` | — | Audit UI code against the Web Interface Guidelines. The verification back-end for UI, after implementation. |
+| `tdd` | — | Red → green → refactor discipline. Applied inside `build` when writing the tests that prove each `§V`. |
+| `agent-browser` | — | Browser automation for smoke tests, exploratory QA, and dogfooding. The engine behind manual UI verification. |
+
+**Cross-cutting skills** — available at any phase:
+
+| Skill | Purpose |
+|---|---|
+| `find-skills` | Discover and install a skill from the open ecosystem when a task needs a capability the repo does not yet have. |
+| `handoff` | Compact the current session into a handoff document so a fresh agent can continue the work. |
+
+**Utilities** used by the skills above, not run directly:
+
+| Skill | Purpose |
+|---|---|
+| `caveman` | Output-compression encoding used inside spec and spec-adjacent writes. |
+| `backprop` | Bug-to-spec protocol: turn a failure into a `§B` record and usually a new `§V` invariant. Invoked by `spec` and `build`. |
+
+**Right-size the process.** A one-line, reversible fix is just `/ck:build` (or a
+direct edit). The full chain is for genuinely uncertain or high-blast-radius
+work — never for a typo.
 
 Default sequence for non-trivial work:
 
 1. Use `grill` if the request is ambiguous.
 2. Use `research` if the spec depends on facts outside the repository.
 3. Use `spec` to create or amend `SPEC.md`.
-4. Use `review` before building high-risk changes.
-5. Use `build` for one or more `§T` tasks.
-6. Use `check` after the build and before shipping.
-7. Use `backprop` whenever a bug or failed verification reveals a missing invariant.
+4. Use `frontend-design` if the change introduces or reshapes user-facing UI.
+5. Use `review` before building high-risk changes.
+6. Use `build` for one or more `§T` tasks.
+7. Use `check` after the build and before shipping.
+8. Let `build` invoke `backprop` whenever a failed verification reveals a
+   missing invariant.
 
 Skip steps only when the change is trivial, reversible, and does not touch a
 contract, shared module, data model, public interface, or security boundary.
+
+**Sectioned ownership.** Each skill owns specific `SPEC.md` sections and never
+rewrites one it does not own. `spec` is the only skill that writes spec content;
+`grill`, `research`, `review`, and `deepen` propose material and hand it to
+`spec` to write.
 
 ---
 
@@ -72,16 +109,19 @@ Required sections:
 | `§G` | Goal: one clear statement of the intended outcome. |
 | `§C` | Constraints: non-negotiable requirements, exclusions, and known unknowns. |
 | `§I` | Interfaces: external surfaces such as CLI commands, files, config keys, APIs, schemas, and environment variables. |
-| `§R` | Research: sourced facts that the spec relies on. Include only when research was needed. |
+| `§R` | Research: sourced facts the spec relies on, as a pipe table. Optional — include only when research was needed. |
 | `§V` | Invariants: testable rules that must remain true. These drive tests and verification. |
-| `§T` | Tasks: ordered implementation work items with status and citations to relevant `§V` and `§I` entries. |
-| `§B` | Bugs: historical bug records and the invariant or fix that prevents recurrence. |
+| `§T` | Tasks: an ordered pipe table of work items with status and citations to the relevant `§V` and `§I` entries. |
+| `§B` | Bugs: a pipe table of historical bug records and the invariant or fix that prevents recurrence. |
+
+The section order is `§G`, `§C`, `§I`, `§R`, `§V`, `§T`, `§B`. See `FORMAT.md`
+in the Cavekit repository for the exact caveman encoding and table shapes.
 
 Task rows should be small enough to build and verify independently. A task is
 not complete unless its cited invariants have a named verification check.
 
-Use normal project language in surrounding documentation. If `SPEC.md` itself
-uses a compact Cavekit format, do not copy that style into user-facing docs.
+Use normal project language in surrounding documentation. `SPEC.md` itself uses
+the compact Cavekit format; do not copy that style into user-facing docs.
 
 ---
 
@@ -179,15 +219,22 @@ Before editing code, the build plan should identify:
 - The files likely to be edited.
 - The exact verification command or commands that prove the change.
 
-During implementation:
+During implementation, work in test-first vertical slices using the `tdd`
+skill:
 
 1. Move the task status from pending to in progress.
-2. Make the smallest code change that satisfies the spec.
-3. Run the named verification.
-4. If verification passes, mark the task complete.
-5. If verification fails, determine whether the cause is a code bug, a wrong
+2. Confirm the seams to test — the public interfaces where behavior is observed.
+3. Write one failing test that pins a `§V` invariant (red).
+4. Make the smallest code change that makes it pass (green).
+5. Run the named verification.
+6. If verification passes, take the next slice or mark the task complete.
+7. If verification fails, determine whether the cause is a code bug, a wrong
    spec, or a missing invariant. Use `backprop` when the spec needs to learn
    from the failure.
+
+One seam, one test, one minimal implementation per cycle. Do not write all tests
+up front, and do not test private internals. Refactoring happens after the loop,
+not inside it — reach for `deepen` or `improve-codebase-architecture` for that.
 
 Do not silently expand task scope. If the implementation reveals new behavior,
 interfaces, or constraints, amend the spec first.
@@ -196,9 +243,13 @@ interfaces, or constraints, amend the spec first.
 
 ## 8. Testing and verification
 
-The repository uses pytest for Python tests. Non-trivial logic must leave behind
-one runnable check: the smallest test or assertion that fails if the behavior
-breaks. Trivial one-line changes do not need a new test.
+The repository uses pytest for Python tests. Follow the `tdd` skill: tests
+verify behavior through public interfaces (seams), never implementation details.
+A good test reads like a specification and survives refactors. Avoid the
+anti-patterns the skill names — implementation-coupled tests, tautological
+assertions, and horizontal slicing. Non-trivial logic must leave behind at least
+one runnable check that fails if the behavior breaks. Trivial one-line changes
+do not need a new test.
 
 Use these checks where relevant:
 
@@ -227,6 +278,18 @@ pytest
 
 Run the smallest relevant command while iterating, then run the full gate before
 shipping. Never call a task done if verification failed or was skipped.
+
+Beyond the automated gate, for crawler, extractor, or UI changes:
+
+- **Manual smoke test** with `agent-browser`: run a small real crawl against a
+  low-risk public site (respecting robots and delay), then inspect the bundle,
+  the generated `report.md`, and the dashboard. Use it for exploratory QA and
+  dogfooding of the Phase 4 viewer and admin screens.
+- **Invariant re-check**: confirm the project invariants hold on the smoke-test
+  output — one page maps to one concept, Postgres mirrors disk, and an
+  incremental re-crawl appends one log entry.
+- **Error-path check**: confirm a deliberately unreachable URL is recorded,
+  appears in the report's failures section, and is filterable in the dashboard.
 
 ---
 
@@ -266,12 +329,19 @@ should be the default when the failure represents a repeatable class of bug.
 
 ---
 
-## 11. Improving design with `deepen`
+## 11. Improving design with `deepen` and `improve-codebase-architecture`
 
-Use `deepen` only when the build is green and there is time for deliberate
-design improvement. It is not part of the urgent bug-fix path.
+Use these only when the build is green and there is time for deliberate design
+improvement. They are not part of the urgent bug-fix path.
 
-A good deepening pass chooses one shallow module and proposes a smaller, clearer
+To find *what* to improve, run `improve-codebase-architecture`. It scans the
+codebase for shallow modules — where the interface is nearly as complex as the
+implementation — and presents deepening candidates as a self-contained HTML
+report in the OS temp directory (nothing lands in the repo). Each candidate
+shows the files, the problem, a proposed solution, and a before/after diagram.
+Pick one candidate, then hand it to `deepen`.
+
+`deepen` then chooses that one shallow module and proposes a smaller, clearer
 interface without changing behavior. It should reduce change amplification, hide
 an implementation decision, or make an error state impossible by design.
 
@@ -305,10 +375,26 @@ use.
 
 ---
 
-## 13. UI work
+## 13. UI work with `frontend-design` and `web-design-guidelines`
 
-UI work still follows Cavekit. Specify the routes, states, and interfaces before
-building.
+UI work still follows Cavekit: the routes, states, and interfaces belong in
+`§I`, and any UI invariants belong in `§V`. The two UI skills bracket the build:
+`frontend-design` sets the visual direction *before* implementation, and
+`web-design-guidelines` audits the result *after* implementation. Between them,
+`build` implements against the spec.
+
+Use `frontend-design` to decide, before writing markup or CSS:
+
+- A concrete subject, audience, and the single job of each screen.
+- A compact token system: 4–6 named palette values, deliberate display and body
+  typefaces, a layout concept, and one signature element the UI is remembered
+  by.
+- Interface copy written from the user's side of the screen: active voice,
+  consistent action names, and empty/error states that give direction.
+
+Avoid the templated AI defaults (cream-and-serif, near-black with one acid
+accent, hairline-rule broadsheet) unless the brief genuinely calls for them.
+Spend boldness in one place and keep the rest quiet.
 
 For the Phase 4 FastAPI and Jinja2 UI, define:
 
@@ -317,7 +403,8 @@ For the Phase 4 FastAPI and Jinja2 UI, define:
 - Admin dashboard: run list, run detail, error filters, concept browser, and
   full-text search.
 - States: empty, loading, error, and populated states for every route.
-- Accessibility: semantic HTML, keyboard navigation, and labeled controls.
+- Accessibility: semantic HTML, keyboard navigation, visible keyboard focus,
+  reduced-motion support, and labeled controls.
 
 Minimum UI artifact:
 
@@ -329,9 +416,33 @@ Minimum UI artifact:
 | `/admin/runs/{id}` | Run detail and errors | No errors |
 | `/admin/search?q=` | Full-text search results | "No matches" |
 
+After the UI is built, run `web-design-guidelines` against the changed templates
+and components. It fetches the current Web Interface Guidelines and reports
+findings in a terse `file:line` format covering accessibility, interaction, and
+UX. Treat its findings the same way as `check` findings: fix, or record a `§B`
+and a hardening `§V` if the issue is a repeatable class.
+
 ---
 
-## 14. Definition of done
+## 14. Supporting skills: `find-skills` and `handoff`
+
+Two skills apply across every phase rather than at one step:
+
+- **`find-skills`** — when a task needs a capability the repository does not yet
+  have, use `find-skills` to search the open skill ecosystem
+  (`npx skills find <query>`) and install the best match with
+  `npx skills add <package>`. Add durable, project-relevant skills through
+  `scripts/post-create.sh` so a container rebuild restores them.
+- **`handoff`** — when a session grows long or must pass to another agent, use
+  `handoff` to write a compact handoff document to the OS temp directory. It
+  references existing artifacts (spec, ADRs, commits, diffs) by path instead of
+  duplicating them, suggests the skills the next session should use, and redacts
+  secrets. Because `SPEC.md` is already the durable memory, the handoff only
+  needs to capture the live working state.
+
+---
+
+## 15. Definition of done
 
 A change is done only when all applicable items are true:
 
@@ -339,10 +450,14 @@ A change is done only when all applicable items are true:
 - `SPEC.md` was created or amended if behavior, interfaces, contracts, or
   invariants changed.
 - Required research was sourced and reflected in `§R`.
+- UI changes had a `frontend-design` direction before implementation and passed
+  a `web-design-guidelines` audit after.
 - High-risk specs were reviewed and any blocking findings were resolved.
 - The selected `§T` tasks are complete.
-- Tests or assertions cover the relevant `§V` invariants.
+- Tests were written test-first at agreed seams and cover the relevant `§V`
+  invariants.
 - `ruff`, `black --check`, `mypy`, and `pytest` pass where applicable.
+- Crawler, extractor, or UI changes were smoke-tested with `agent-browser`.
 - `check` reports no unresolved drift for the touched area.
 - Bugs and failed verification paths were backpropagated into `§B` and `§V`
   when appropriate.
@@ -350,7 +465,7 @@ A change is done only when all applicable items are true:
 
 ---
 
-## 15. Pull request checklist
+## 16. Pull request checklist
 
 Copy this checklist into each non-trivial pull request and delete items that do
 not apply.
@@ -359,10 +474,13 @@ not apply.
 - [ ] Grill: ambiguous requirements clarified, or skipped as trivial
 - [ ] Research: external facts sourced in §R, or not needed
 - [ ] Spec: SPEC.md updated for changed behavior, interfaces, invariants, or tasks
+- [ ] Design: frontend-design direction set for UI changes, or no UI change
 - [ ] Review: high-risk spec reviewed, or risk was low enough to skip
-- [ ] Build: selected §T tasks completed with focused code changes
-- [ ] Tests: runnable checks cover touched §V invariants
+- [ ] Build: selected §T tasks completed test-first in vertical slices (tdd)
+- [ ] Tests: runnable checks cover touched §V invariants at agreed seams
 - [ ] Verify: ruff / black --check / mypy / pytest pass where applicable
+- [ ] Smoke: crawler/extractor/UI changes exercised with agent-browser
+- [ ] UI audit: web-design-guidelines run on changed templates, or no UI change
 - [ ] Check: no unresolved spec drift in touched areas
 - [ ] Backprop: bugs or failed verification recorded in §B and hardened with §V when appropriate
 - [ ] Docs: README or standards docs updated in the same PR
