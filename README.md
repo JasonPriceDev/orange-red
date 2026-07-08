@@ -99,6 +99,37 @@ Because custom models like `deepseek-v4-pro` are not in Copilot CLI's built-in m
 - `COPILOT_PROVIDER_MAX_PROMPT_TOKENS=200000`
 - `COPILOT_PROVIDER_MAX_OUTPUT_TOKENS=65536`
 
+## Agent Skills
+
+Agent skills (`SKILL.md` bundles that give Copilot/agents domain knowledge) live in **two directories**, split by origin:
+
+| Directory | Contents | How to add |
+| --- | --- | --- |
+| `.agents/skills/` | Third-party skills installed via a CLI — the `caveman*`/`cavecrew` family and `frontend-design` | See installers below |
+| `.github/skills/` | Repo-native, hand-authored skills (e.g. `gh-cli`) | Author `SKILL.md` by hand |
+
+VS Code Copilot discovers skills from **both** locations automatically. `.agents/skills/` is the standard output path for CLI installers, so it is the source of truth for everything installed that way — don't move those copies into `.github/`, a dev-container rebuild just re-creates them under `.agents/`.
+
+Installers run from `scripts/post-create.sh` on every container rebuild:
+
+- **caveman family** — `curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash`
+- **other skills** — `npx skills add <repo-url> --skill <name>`
+
+The caveman installer re-runs **only when the upstream repo has new commits**: `post-create.sh` records the repo's last-commit epoch in `.agents/skills/.caveman-installed-epoch` and compares it against the tip of `main` (via the GitHub API) on each rebuild. If the API is unreachable it falls back to a plain "install if missing" check.
+
+> The caveman installer also drops a stray singular `agent/` mirror; `post-create.sh` removes it so only the standard `.agents/` tree remains.
+
+## Cross-agent memory (cavemem)
+
+[`cavemem`](https://github.com/JuliusBrussee/cavemem) gives coding agents persistent, compressed memory across sessions (local SQLite, no cloud). It's installed globally (`npm install -g cavemem`, idempotent guard in `scripts/post-create.sh`) and wired for **both query and capture**:
+
+- **Query (MCP)** — registered in `.vscode/mcp.json` so Copilot gets `search`, `timeline`, `get_observations` tools.
+- **Capture (hooks)** — `~/.copilot/hooks/cavemem.json` fires on `SessionStart`, `UserPromptSubmit`, `PostToolUse`, and `Stop` events. Copilot has no `SessionEnd`, so that event is absent (same as Codex). The published npm release lacks a `--ide copilot` installer, so `post-create.sh` writes this file by hand in the same format the main-branch installer produces.
+
+Data lives at `~/.cavemem` (outside the repo, nothing to gitignore). Useful commands: `cavemem status`, `cavemem search "<query>"`, `cavemem viewer`.
+
+> Once npm publishes a release with `--ide copilot`, the manual hooks-writing step can be dropped from `post-create.sh` in favor of `cavemem install --ide copilot`.
+
 ## Development
 
 ### Available Tools

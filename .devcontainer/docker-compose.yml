@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ..:/workspace:cached
+      - ..:/workspaces/orange-red:cached
     command: sleep infinity
     depends_on:
       - db

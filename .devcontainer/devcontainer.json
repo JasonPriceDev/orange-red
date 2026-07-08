@@ -2,7 +2,7 @@
   "name": "Orion Forge",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
-  "workspaceFolder": "/workspace",
+  "workspaceFolder": "/workspaces/orange-red",
   "runArgs": ["--env-file", "${localWorkspaceFolder}/.devcontainer/.env"],
   "mounts": [
     "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
