@@ -72,6 +72,7 @@ fi
 # write the hooks file by hand — same format as the main-branch installer.
 if ! command -v cavemem >/dev/null 2>&1; then
     npm install -g --prefix "$NPM_PREFIX" cavemem
+    npm approve-scripts cavemem --yes 2>/dev/null || true
 fi
 
 if [ ! -f "$HOME/.copilot/hooks/cavemem.json" ]; then
@@ -110,38 +111,37 @@ fi
 # semantic search silently degrades.  Idempotent: npm install -g is a
 # no-op if already present.
 npm install -g --prefix "$NPM_PREFIX" @xenova/transformers
+npm approve-scripts @xenova/transformers --yes 2>/dev/null || true
 
 # Install the caveman skill family (caveman, cavecrew, caveman-commit, etc.)
-# via its official installer, which writes into .agents/skills/.
+# via its official installer, pinned to a release tag.
 #
-# Re-run when the caveman repo has new commits since our last install. We stamp
-# the repo's last-commit epoch into a marker file and compare it against the
-# current tip of `main` (GitHub API) on every rebuild.
+# Re-run when upstream has a newer release. We stamp the installed release tag
+# into a marker file and compare against the latest release (GitHub API) on
+# every rebuild.
 # ponytail: if the API is unreachable (offline / rate-limited) we fall back to a
 # plain existence check so a rebuild never hard-fails on a network blip - the
 # ceiling is that an offline rebuild won't pick up an update until it's online.
+CAVEMAN_RELEASE="v1.9.1"
+
 install_caveman_skills() {
-    curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
+    curl -fsSL "https://raw.githubusercontent.com/JuliusBrussee/caveman/${CAVEMAN_RELEASE}/install.sh" | bash
     # The installer also drops a stray singular `agent/` mirror - remove it so
     # only the standard `.agents/` tree remains.
     rm -rf "$WORKSPACE_ROOT/agent"
 }
 
 CAVEMAN_STAMP="$WORKSPACE_ROOT/.agents/skills/.caveman-installed-epoch"
-# Latest commit date on caveman's main branch, as an epoch (empty on any failure).
-CAVEMAN_REMOTE_ISO="$(curl -fsSL "https://api.github.com/repos/JuliusBrussee/caveman/commits/main" 2>/dev/null \
-    | jq -r '.commit.committer.date // empty' 2>/dev/null)"
-CAVEMAN_REMOTE_EPOCH=""
-if [ -n "$CAVEMAN_REMOTE_ISO" ]; then
-    CAVEMAN_REMOTE_EPOCH="$(date -d "$CAVEMAN_REMOTE_ISO" +%s 2>/dev/null || true)"
-fi
+# Latest release tag name (empty on any failure).
+CAVEMAN_REMOTE_TAG="$(curl -fsSL "https://api.github.com/repos/JuliusBrussee/caveman/releases/latest" 2>/dev/null \
+    | jq -r '.tag_name // empty' 2>/dev/null)"
 
-if [ -n "$CAVEMAN_REMOTE_EPOCH" ]; then
-    # Date-aware path: (re)install if never stamped or the repo is newer.
-    CAVEMAN_LOCAL_EPOCH="$(cat "$CAVEMAN_STAMP" 2>/dev/null || echo 0)"
-    if [ "$CAVEMAN_REMOTE_EPOCH" -gt "$CAVEMAN_LOCAL_EPOCH" ]; then
-        install_caveman_skills
-        echo "$CAVEMAN_REMOTE_EPOCH" > "$CAVEMAN_STAMP"
+if [ -n "$CAVEMAN_REMOTE_TAG" ]; then
+    # Release-aware path: (re)install if never stamped or the tag changed.
+    CAVEMAN_LOCAL_TAG="$(cat "$CAVEMAN_STAMP" 2>/dev/null || true)"
+    if [ "$CAVEMAN_REMOTE_TAG" != "$CAVEMAN_LOCAL_TAG" ]; then
+        CAVEMAN_RELEASE="$CAVEMAN_REMOTE_TAG" install_caveman_skills
+        echo "$CAVEMAN_REMOTE_TAG" > "$CAVEMAN_STAMP"
     fi
 elif [ ! -d "$WORKSPACE_ROOT/.agents/skills/caveman" ]; then
     # Offline fallback: install only if the skills are missing entirely.

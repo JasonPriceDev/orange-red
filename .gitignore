@@ -28,5 +28,5 @@ venv/
 .env*.local
 .env
 
-# caveman skill install stamp (local state - see scripts/post-create.sh)
+# caveman skill install stamp (local state - holds installed release tag)
 .agents/skills/.caveman-installed-epoch
