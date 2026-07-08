@@ -59,6 +59,100 @@ if ! command -v copilot >/dev/null 2>&1; then
     npm install -g --prefix "$NPM_PREFIX" @github/copilot
 fi
 
+# Install caveman-code CLI (provides the `caveman-code` / `caveman` binaries)
+if ! command -v caveman-code >/dev/null 2>&1; then
+    npm install -g --prefix "$NPM_PREFIX" @juliusbrussee/caveman-code
+fi
+
+# Install cavemem CLI (cross-agent persistent memory). MCP registration lives
+# in .vscode/mcp.json; Copilot session-capture hooks are written to
+# ~/.copilot/hooks/cavemem.json (idempotent: only created if the hooks dir is
+# empty). The published npm release has no --ide copilot installer yet, so we
+# write the hooks file by hand — same format as the main-branch installer.
+if ! command -v cavemem >/dev/null 2>&1; then
+    npm install -g --prefix "$NPM_PREFIX" cavemem
+fi
+
+if [ ! -f "$HOME/.copilot/hooks/cavemem.json" ]; then
+    mkdir -p "$HOME/.copilot/hooks"
+    cat > "$HOME/.copilot/hooks/cavemem.json" <<'CAVEMEM_HOOKS'
+{
+  "hooks": {
+    "SessionStart": [
+      { "type": "command", "command": "cavemem hook run session-start --ide copilot" }
+    ],
+    "UserPromptSubmit": [
+      { "type": "command", "command": "cavemem hook run user-prompt-submit --ide copilot" }
+    ],
+    "PostToolUse": [
+      { "type": "command", "command": "cavemem hook run post-tool-use --ide copilot" }
+    ],
+    "Stop": [
+      { "type": "command", "command": "cavemem hook run stop --ide copilot" }
+    ]
+  }
+}
+CAVEMEM_HOOKS
+fi
+
+# Register cavemem IDE tracking so `cavemem status` doesn't show
+# "ides: none".  Uses --ide codex (closest to Copilot's event model —
+# no SessionEnd, same as Codex) since --ide copilot isn't shipped yet.
+# ponytail: idempotent guard via cavemem status grep; re-runs only if
+# no IDE is registered.
+if cavemem status 2>/dev/null | grep -q 'ides:\s*none'; then
+    cavemem install --ide codex
+fi
+
+# Install @xenova/transformers for cavemem's local embedding provider.
+# cavemem ships with a bundled worker that loads it at runtime; without it
+# semantic search silently degrades.  Idempotent: npm install -g is a
+# no-op if already present.
+npm install -g --prefix "$NPM_PREFIX" @xenova/transformers
+
+# Install the caveman skill family (caveman, cavecrew, caveman-commit, etc.)
+# via its official installer, which writes into .agents/skills/.
+#
+# Re-run when the caveman repo has new commits since our last install. We stamp
+# the repo's last-commit epoch into a marker file and compare it against the
+# current tip of `main` (GitHub API) on every rebuild.
+# ponytail: if the API is unreachable (offline / rate-limited) we fall back to a
+# plain existence check so a rebuild never hard-fails on a network blip - the
+# ceiling is that an offline rebuild won't pick up an update until it's online.
+install_caveman_skills() {
+    curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
+    # The installer also drops a stray singular `agent/` mirror - remove it so
+    # only the standard `.agents/` tree remains.
+    rm -rf /workspace/agent
+}
+
+CAVEMAN_STAMP="/workspace/.agents/skills/.caveman-installed-epoch"
+# Latest commit date on caveman's main branch, as an epoch (empty on any failure).
+CAVEMAN_REMOTE_ISO="$(curl -fsSL "https://api.github.com/repos/JuliusBrussee/caveman/commits/main" 2>/dev/null \
+    | jq -r '.commit.committer.date // empty' 2>/dev/null)"
+CAVEMAN_REMOTE_EPOCH=""
+if [ -n "$CAVEMAN_REMOTE_ISO" ]; then
+    CAVEMAN_REMOTE_EPOCH="$(date -d "$CAVEMAN_REMOTE_ISO" +%s 2>/dev/null || true)"
+fi
+
+if [ -n "$CAVEMAN_REMOTE_EPOCH" ]; then
+    # Date-aware path: (re)install if never stamped or the repo is newer.
+    CAVEMAN_LOCAL_EPOCH="$(cat "$CAVEMAN_STAMP" 2>/dev/null || echo 0)"
+    if [ "$CAVEMAN_REMOTE_EPOCH" -gt "$CAVEMAN_LOCAL_EPOCH" ]; then
+        install_caveman_skills
+        echo "$CAVEMAN_REMOTE_EPOCH" > "$CAVEMAN_STAMP"
+    fi
+elif [ ! -d "/workspace/.agents/skills/caveman" ]; then
+    # Offline fallback: install only if the skills are missing entirely.
+    install_caveman_skills
+fi
+
+# Install third-party agent skills. `skills add` is idempotent - it re-copies
+# into .agents/skills/ so this is safe to run on every rebuild.
+if [ ! -d "/workspace/.agents/skills/frontend-design" ]; then
+    npx --yes skills add https://github.com/anthropics/skills --skill frontend-design
+fi
+
 # Add Copilot CLI BYOK provider switching functions to bashrc
 if ! grep -q 'copilot-deepseek()' "$HOME/.bashrc" 2>/dev/null; then
     cat <<'BASHRC_EOF' >> "$HOME/.bashrc"

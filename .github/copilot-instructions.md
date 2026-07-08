@@ -2,7 +2,11 @@
 
 ## Communication style
 
-Use caveman communication mode. See `.github/skills/caveman/SKILL.md` for full rules.
+Use caveman communication mode. See `.agents/skills/caveman/SKILL.md` for full rules.
+
+## Agent skills location
+
+Skills live in two dirs, split by origin: `.agents/skills/` = CLI-installed, source of truth (caveman* + cavecrew family, frontend-design); `.github/skills/` = repo-native, hand-authored (gh-cli). Both are auto-discovered. Don't relocate CLI-installed skills into `.github/` — a rebuild re-creates them under `.agents/`.
 
 ## Coding philosophy: Ponytail (lazy senior dev)
 
