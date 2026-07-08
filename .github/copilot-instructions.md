@@ -6,7 +6,18 @@ Use caveman communication mode. See `.agents/skills/caveman/SKILL.md` for full r
 
 ## Agent skills location
 
-Skills live in two dirs, split by origin: `.agents/skills/` = CLI-installed, source of truth (caveman* + cavecrew family, frontend-design); `.github/skills/` = repo-native, hand-authored (gh-cli). Both are auto-discovered. Don't relocate CLI-installed skills into `.github/` — a rebuild re-creates them under `.agents/`.
+Skills live in two dirs, split by origin: `.agents/skills/` = CLI-installed, source of truth; `.github/skills/` = repo-native, hand-authored (`gh-cli`). Both are auto-discovered. Don't relocate CLI-installed skills into `.github/` — a rebuild re-creates them under `.agents/`.
+
+## Workflow: Cavekit spec-driven development
+
+Work moves through `SPEC.md` at the repo root — the durable project memory. Full detail in `docs/standards-and-guides/workflow-guide.md`. Reach for the skill that fits the task:
+
+- **Loop (every time):** `spec` (sole writer of `SPEC.md`) → `build` (plan → execute, test-first) → `check` (read-only drift report).
+- **Reach for when the change earns it:** `grill` (sharpen a fuzzy idea), `research` (sourced facts → §R), `review` (adversarial spec review), `deepen` + `improve-codebase-architecture` (make shallow modules deep), `frontend-design` (UI direction, before build), `web-design-guidelines` (UI audit, after build), `tdd` (red→green inside build), `agent-browser` (smoke tests, QA, dogfooding).
+- **Cross-cutting:** `find-skills` (discover/install a missing capability), `handoff` (compact a long session for the next agent).
+- **Utilities (invoked by other skills):** `caveman` (encoding), `backprop` (bug → §B/§V).
+
+Right-size: a one-line reversible fix is just a `build`, never the full chain. Only `spec` writes spec content; other skills propose material and hand it to `spec`.
 
 ## Coding philosophy: Ponytail (lazy senior dev)
 
