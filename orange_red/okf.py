@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any
@@ -15,6 +16,9 @@ REQUIRED_FRONTMATTER_FIELDS = (
     "resource",
     "tags",
     "timestamp",
+)
+_TIMESTAMP_MICROSECOND_RE = re.compile(
+    r"[T ]\d{2}:\d{2}:\d{2}\.\d{6}(?:$|Z$|[+-]\d{2}:\d{2}$)"
 )
 
 
@@ -55,8 +59,27 @@ def serialize_concept(metadata: Mapping[str, Any], body: str) -> str:
 def _normalize_metadata(metadata: Mapping[str, Any]) -> dict[str, Any]:
     normalized: dict[str, Any] = {}
     for key, value in metadata.items():
-        normalized[str(key)] = _normalize_value(value)
+        field = str(key)
+        normalized[field] = (
+            _normalize_timestamp(value)
+            if field == "timestamp"
+            else _normalize_value(value)
+        )
     return normalized
+
+
+def _normalize_timestamp(value: Any) -> str:
+    if isinstance(value, datetime):
+        return value.isoformat(timespec="microseconds")
+    if isinstance(value, str):
+        try:
+            datetime.fromisoformat(value)
+        except ValueError as exc:
+            raise FrontmatterError("timestamp must be ISO 8601 datetime") from exc
+        if not _TIMESTAMP_MICROSECOND_RE.search(value):
+            raise FrontmatterError("timestamp must include microsecond precision")
+        return value
+    raise FrontmatterError("timestamp must be datetime or ISO 8601 string")
 
 
 def _normalize_value(value: Any) -> Any:
