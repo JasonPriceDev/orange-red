@@ -204,7 +204,7 @@ V23 | DB enforces unique concept.path, unique chunk(concept_id, ord), FK links, 
 
 ```
 id  | status | task | cites
-T1  | . | scaffold `orange_red` package + `pyproject.toml` console script | I.cli
+T1  | x | scaffold `orange_red` package + `pyproject.toml` console script | I.cli
 T2  | . | OKF writer: frontmatter+body serializer, required YAML fields + microsecond timestamp | V2,I.okf
 T3  | . | OKF conformance validator for required frontmatter fields and reserved docs | V2,V3
 T4  | . | heuristic type classifier with controlled type set | V1,I.okf
