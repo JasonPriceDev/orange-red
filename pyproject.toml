@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=80", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orange-red"
+version = "0.1.0"
+description = "Intranet scraper that writes OKF markdown bundles and indexes them with pgvector."
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+  "alembic>=1.16",
+  "beautifulsoup4>=4.13",
+  "html2text>=2025.4.15",
+  "openai>=1.93",
+  "pgvector>=0.4",
+  "psycopg[binary]>=3.2",
+  "pypdf>=5.7",
+  "PyYAML>=6.0",
+  "Scrapy>=2.13",
+  "SQLAlchemy>=2.0",
+  "tiktoken>=0.9",
+]
+
+[project.scripts]
+orange-red = "orange_red.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["orange_red*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py314"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
