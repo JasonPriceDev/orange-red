@@ -7,6 +7,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 PASS=0
 FAIL=0
@@ -116,8 +118,8 @@ check "hook PostToolUse"  grep -q 'post-tool-use' ~/.copilot/hooks/cavemem.json 
 check "hook Stop"       grep -q '"Stop"' ~/.copilot/hooks/cavemem.json 2>/dev/null
 
 # cavemem MCP registration
-check "MCP config"      test -f /workspace/.vscode/mcp.json
-check "MCP cavemem entry" grep -q 'cavemem' /workspace/.vscode/mcp.json 2>/dev/null
+check "MCP config"      test -f "$REPO_ROOT/.vscode/mcp.json"
+check "MCP cavemem entry" grep -q 'cavemem' "$REPO_ROOT/.vscode/mcp.json" 2>/dev/null
 
 # cavemem IDE tracking
 check "IDE registered"  bash -c 'cavemem status 2>/dev/null | grep -qv "ides:.*none"'
@@ -128,15 +130,15 @@ warn  "semantic search" bash -c 'cavemem search "cavemem" 2>/dev/null; test $? -
 # ── caveman skills ────────────────────────────────────────────
 echo ""
 echo "── Agent skills ──"
-check "caveman"         test -f /workspace/.agents/skills/caveman/SKILL.md
-check "caveman-commit"  test -f /workspace/.agents/skills/caveman-commit/SKILL.md
-check "caveman-review"  test -f /workspace/.agents/skills/caveman-review/SKILL.md
-check "caveman-compress" test -f /workspace/.agents/skills/caveman-compress/SKILL.md
-check "caveman-help"    test -f /workspace/.agents/skills/caveman-help/SKILL.md
-check "caveman-stats"   test -f /workspace/.agents/skills/caveman-stats/SKILL.md
-check "cavecrew"        test -f /workspace/.agents/skills/cavecrew/SKILL.md
-check "frontend-design" test -f /workspace/.agents/skills/frontend-design/SKILL.md
-check "gh-cli"          test -f /workspace/.github/skills/gh-cli/SKILL.md
+check "caveman"         test -f "$REPO_ROOT/.agents/skills/caveman/SKILL.md"
+check "caveman-commit"  test -f "$REPO_ROOT/.agents/skills/caveman-commit/SKILL.md"
+check "caveman-review"  test -f "$REPO_ROOT/.agents/skills/caveman-review/SKILL.md"
+check "caveman-compress" test -f "$REPO_ROOT/.agents/skills/caveman-compress/SKILL.md"
+check "caveman-help"    test -f "$REPO_ROOT/.agents/skills/caveman-help/SKILL.md"
+check "caveman-stats"   test -f "$REPO_ROOT/.agents/skills/caveman-stats/SKILL.md"
+check "cavecrew"        test -f "$REPO_ROOT/.agents/skills/cavecrew/SKILL.md"
+check "frontend-design" test -f "$REPO_ROOT/.agents/skills/frontend-design/SKILL.md"
+check "gh-cli"          test -f "$REPO_ROOT/.github/skills/gh-cli/SKILL.md"
 
 # ── Docker services ───────────────────────────────────────────
 echo ""
@@ -170,20 +172,20 @@ check "selfagency.z-models"           ext_installed 'selfagency.z-models'
 echo ""
 echo "── Copilot BYOK helpers ──"
 check "copilot-openrouter in bashrc"  grep -q 'copilot-openrouter' ~/.bashrc 2>/dev/null || \
-      grep -q 'copilot-openrouter' /workspace/scripts/post-create.sh 2>/dev/null
+    grep -q 'copilot-openrouter' "$REPO_ROOT/scripts/post-create.sh" 2>/dev/null
 check "copilot-deepseek in bashrc"   grep -q 'copilot-deepseek' ~/.bashrc 2>/dev/null || \
-      grep -q 'copilot-deepseek' /workspace/scripts/post-create.sh 2>/dev/null
+    grep -q 'copilot-deepseek' "$REPO_ROOT/scripts/post-create.sh" 2>/dev/null
 check "copilot-default in bashrc"    grep -q 'copilot-default' ~/.bashrc 2>/dev/null || \
-      grep -q 'copilot-default' /workspace/scripts/post-create.sh 2>/dev/null
+    grep -q 'copilot-default' "$REPO_ROOT/scripts/post-create.sh" 2>/dev/null
 
 # ── Configuration files ───────────────────────────────────────
 echo ""
 echo "── Config files ──"
-check "copilot-instructions.md"  test -f /workspace/.github/copilot-instructions.md
-check "devcontainer.json"        test -f /workspace/.devcontainer/devcontainer.json
-check "docker-compose.yml"       test -f /workspace/.devcontainer/docker-compose.yml
-check "Dockerfile"               test -f /workspace/.devcontainer/Dockerfile
-check ".env exists"              test -f /workspace/.devcontainer/.env
+check "copilot-instructions.md"  test -f "$REPO_ROOT/.github/copilot-instructions.md"
+check "devcontainer.json"        test -f "$REPO_ROOT/.devcontainer/devcontainer.json"
+check "docker-compose.yml"       test -f "$REPO_ROOT/.devcontainer/docker-compose.yml"
+check "Dockerfile"               test -f "$REPO_ROOT/.devcontainer/Dockerfile"
+check ".env exists"              test -f "$REPO_ROOT/.devcontainer/.env"
 
 # ── Environment variables ─────────────────────────────────────
 echo ""
