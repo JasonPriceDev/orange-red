@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "name": "orange-red",
+      "path": "."
+    },
+    {
+      "name": "orange-red-data",
+      "path": "orange-red-data"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "orange-red-data": true
+    }
+  }
+}

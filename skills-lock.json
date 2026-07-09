@@ -26,10 +26,10 @@
       "computedHash": "c5527c994fbd4c22b36714e3b124a0f167a533d114ab164fb1d35e2123533917"
     },
     "caveman": {
-      "source": "JuliusBrussee/cavekit",
+      "source": "JuliusBrussee/caveman",
       "sourceType": "github",
       "skillPath": "skills/caveman/SKILL.md",
-      "computedHash": "b7296730e7d074253e6806b9e71dab4a6e1cbfeb643cafc000f9ce7bec0a825c"
+      "computedHash": "d18cdf73a5f5c496d681a43a6846336b110223bdffa6817b8992529c57f1a815"
     },
     "caveman-commit": {
       "source": "JuliusBrussee/caveman",

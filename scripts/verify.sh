@@ -59,7 +59,7 @@ check "chromium"        test -x /usr/bin/chromium
 # ── Core runtimes ─────────────────────────────────────────────
 echo ""
 echo "── Core runtimes ──"
-check "python3"         python3 --version
+check "python3.14"      python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 14) else 1)'
 check "pip3"            pip3 --version
 check "node"            node --version
 check "npm"             npm --version
@@ -84,7 +84,14 @@ check "caveman-code"    command -v caveman-code
 # ── Python packages ───────────────────────────────────────────
 echo ""
 echo "── Python packages ──"
-check "psycopg2"        python3 -c "import psycopg2"
+check "orange_red"      python3 -c "import orange_red"
+check "psycopg3"        python3 -c "import psycopg"
+check "sqlalchemy"      python3 -c "import sqlalchemy"
+check "alembic"         python3 -c "import alembic"
+check "pgvector"        python3 -c "import pgvector"
+check "scrapy"          python3 -c "import scrapy"
+check "openai"          python3 -c "import openai"
+check "yaml"            python3 -c "import yaml"
 check "ipython"         python3 -c "import IPython"
 check "pytest"          python3 -c "import pytest"
 check "ipdb"            python3 -c "import ipdb"
@@ -134,7 +141,7 @@ check "gh-cli"          test -f /workspace/.github/skills/gh-cli/SKILL.md
 # ── Docker services ───────────────────────────────────────────
 echo ""
 echo "── Docker services ──"
-warn  "postgres container" bash -c 'timeout 5 docker ps --format "{{.Names}}" 2>/dev/null | grep -qE "db|postgres"'
+warn  "pgvector postgres container" bash -c 'timeout 5 docker ps --format "{{.Image}} {{.Names}}" 2>/dev/null | grep -qiE "pgvector|postgres"'
 
 # ── VS Code extensions (check installed on disk) ──────────────
 echo ""

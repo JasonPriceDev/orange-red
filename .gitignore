@@ -28,5 +28,8 @@ venv/
 .env*.local
 .env
 
+# ignored nested OKF data repo
+orange-red-data/
+
 # caveman skill install stamp (local state - holds installed release tag)
 .agents/skills/.caveman-installed-epoch
