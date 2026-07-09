@@ -18,6 +18,7 @@ fi
 if [ -n "$GIT_EMAIL" ]; then
     git config --global user.email "$GIT_EMAIL"
 fi
+git config --global push.autoSetupRemote true
 
 # Install GitHub CLI if not present
 if ! command -v gh >/dev/null 2>&1; then

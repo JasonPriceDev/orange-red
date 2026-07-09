@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
+from pathlib import PurePath
 from typing import Any
 
 import yaml
@@ -20,10 +21,18 @@ REQUIRED_FRONTMATTER_FIELDS = (
 _TIMESTAMP_MICROSECOND_RE = re.compile(
     r"[T ]\d{2}:\d{2}:\d{2}\.\d{6}(?:$|Z$|[+-]\d{2}:\d{2}$)"
 )
+_LOG_TIMESTAMP_MICROSECOND_RE = re.compile(
+    r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{6}"
+    r"(?:Z|[+-]\d{2}:\d{2})?"
+)
 
 
 class FrontmatterError(ValueError):
     """Frontmatter cannot be serialized as valid OKF metadata."""
+
+
+class ConformanceError(ValueError):
+    """Markdown document does not conform to orange-red OKF rules."""
 
 
 def serialize_frontmatter(metadata: Mapping[str, Any]) -> str:
@@ -54,6 +63,22 @@ def serialize_concept(metadata: Mapping[str, Any], body: str) -> str:
     if not clean_body:
         raise FrontmatterError("concept body must be non-empty")
     return f"{serialize_frontmatter(metadata)}\n{clean_body}\n"
+
+
+def validate_okf_markdown(path: str | PurePath, content: str) -> None:
+    """Validate one OKF markdown document by bundle-relative path."""
+
+    name = PurePath(path).name
+    if name == "index.md":
+        _validate_index_document(content)
+        return
+    if name == "log.md":
+        _validate_log_document(content)
+        return
+    metadata, body = _parse_concept_document(content)
+    _require_fields(metadata, error_type=ConformanceError)
+    if not body.strip():
+        raise ConformanceError("concept body must be non-empty")
 
 
 def _normalize_metadata(metadata: Mapping[str, Any]) -> dict[str, Any]:
@@ -96,11 +121,51 @@ def _normalize_value(value: Any) -> Any:
     return str(value)
 
 
-def _require_fields(metadata: Mapping[str, Any]) -> None:
+def _parse_concept_document(content: str) -> tuple[dict[str, Any], str]:
+    if not content.startswith("---\n"):
+        raise ConformanceError("concept document must start with YAML frontmatter")
+    try:
+        frontmatter, body = content.removeprefix("---\n").split("\n---\n", 1)
+    except ValueError as exc:
+        raise ConformanceError("concept document must close YAML frontmatter") from exc
+    try:
+        metadata = yaml.safe_load(frontmatter)
+    except yaml.YAMLError as exc:
+        raise ConformanceError("concept frontmatter must parse as YAML") from exc
+    if not isinstance(metadata, dict):
+        raise ConformanceError("concept frontmatter must be a mapping")
+    return metadata, body
+
+
+def _validate_index_document(content: str) -> None:
+    if not content.startswith("---\n"):
+        return
+    metadata, _body = _parse_concept_document(content)
+    disallowed = sorted(set(metadata) - {"okf_version"})
+    if disallowed:
+        raise ConformanceError(
+            f"index.md reserved frontmatter fields not allowed: {', '.join(disallowed)}"
+        )
+
+
+def _validate_log_document(content: str) -> None:
+    if content.startswith("---\n"):
+        raise ConformanceError("log.md must not use concept frontmatter")
+    lines = [line for line in content.splitlines() if line.strip()]
+    for line in lines:
+        if "**Update**" in line or "**Creation**" in line:
+            if not _LOG_TIMESTAMP_MICROSECOND_RE.search(line):
+                raise ConformanceError("log.md entries must include microsecond timestamp")
+
+
+def _require_fields(
+    metadata: Mapping[str, Any],
+    error_type: type[ValueError] = FrontmatterError,
+) -> None:
     missing = [
         field
         for field in REQUIRED_FRONTMATTER_FIELDS
         if field not in metadata or metadata[field] in (None, "", [])
     ]
     if missing:
-        raise FrontmatterError(f"missing required frontmatter fields: {', '.join(missing)}")
+        raise error_type(f"missing required frontmatter fields: {', '.join(missing)}")
