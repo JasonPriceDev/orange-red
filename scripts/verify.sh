@@ -171,12 +171,9 @@ check "selfagency.z-models"           ext_installed 'selfagency.z-models'
 # ── Copilot BYOK helpers ──────────────────────────────────────
 echo ""
 echo "── Copilot BYOK helpers ──"
-check "copilot-openrouter in bashrc"  grep -q 'copilot-openrouter' ~/.bashrc 2>/dev/null || \
-    grep -q 'copilot-openrouter' "$REPO_ROOT/scripts/post-create.sh" 2>/dev/null
-check "copilot-deepseek in bashrc"   grep -q 'copilot-deepseek' ~/.bashrc 2>/dev/null || \
-    grep -q 'copilot-deepseek' "$REPO_ROOT/scripts/post-create.sh" 2>/dev/null
-check "copilot-default in bashrc"    grep -q 'copilot-default' ~/.bashrc 2>/dev/null || \
-    grep -q 'copilot-default' "$REPO_ROOT/scripts/post-create.sh" 2>/dev/null
+check "copilot-openrouter in bashrc"  bash -c "grep -q 'copilot-openrouter' ~/.bashrc 2>/dev/null || grep -q 'copilot-openrouter' \"$REPO_ROOT/scripts/post-create.sh\" 2>/dev/null"
+check "copilot-deepseek in bashrc"   bash -c "grep -q 'copilot-deepseek' ~/.bashrc 2>/dev/null || grep -q 'copilot-deepseek' \"$REPO_ROOT/scripts/post-create.sh\" 2>/dev/null"
+check "copilot-default in bashrc"    bash -c "grep -q 'copilot-default' ~/.bashrc 2>/dev/null || grep -q 'copilot-default' \"$REPO_ROOT/scripts/post-create.sh\" 2>/dev/null"
 
 # ── Configuration files ───────────────────────────────────────
 echo ""
